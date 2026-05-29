@@ -188,6 +188,23 @@ pm2 restart word-cloud
 pm2 reload word-cloud                      # 零停机重载
 ```
 
+#### 日常更新（一键脚本）
+
+仓库根目录提供了 `deploy.sh`：拉代码 → 必要时 `npm ci` → `pm2 reload` → 健康检查。
+本地 `git push` 之后，VPS 上一行搞定：
+
+```bash
+cd /opt/word-cloud && ./deploy.sh
+```
+
+也可以从本地一行触发（需 ssh 免密或 sshpass）：
+
+```bash
+ssh root@<vps-ip> 'cd /opt/word-cloud && ./deploy.sh'
+```
+
+环境变量可覆盖默认值：`APP_DIR` / `PM2_NAME` / `HEALTH_URL`。
+
 ### 5. Nginx 反向代理
 
 AlmaLinux 9 的 `nginx.conf` 默认 include `/etc/nginx/conf.d/*.conf`，但 `nginx.conf` 本体里**已经有一个内置的 `server { listen 80 default_server; }` 块**指向欢迎页。如果我们再写一个 `default_server`，`nginx -t` 会报 `duplicate default_server` 错。
