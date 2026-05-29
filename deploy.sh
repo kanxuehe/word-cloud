@@ -26,7 +26,15 @@ fi
 echo "[deploy] pm2 reload $PM2_NAME"
 pm2 reload "$PM2_NAME" --update-env >/dev/null
 
-sleep 1
 echo "[deploy] health check $HEALTH_URL"
-curl -fsS --max-time 5 "$HEALTH_URL" && echo
-echo "[deploy] OK"
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  if body=$(curl -fsS --max-time 3 "$HEALTH_URL" 2>/dev/null); then
+    echo "$body"
+    echo "[deploy] OK"
+    exit 0
+  fi
+  sleep 1
+done
+echo "[deploy] FAILED: health check did not pass within 10s" >&2
+pm2 logs "$PM2_NAME" --lines 20 --nostream 2>&1 | tail -30 >&2 || true
+exit 1
