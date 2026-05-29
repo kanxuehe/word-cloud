@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>单词管理 · 生词云</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">生词云</div>
+      <nav>
+        <a href="/">词云</a>
+        <a href="/manage.html" class="active">管理</a>
+      </nav>
+      <div class="user-area">
+        <span id="user-label"></span>
+        <button class="ghost" id="logout-btn">退出</button>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="manage-grid">
+        <div class="card">
+          <h2 id="form-title">添加新单词</h2>
+          <form id="word-form">
+            <input type="hidden" id="word-id" />
+            <div class="field">
+              <label for="word">原词 *</label>
+              <input
+                type="text"
+                id="word"
+                class="full"
+                maxlength="128"
+                required
+                autocomplete="off"
+              />
+            </div>
+            <div class="field">
+              <label for="translation">翻译</label>
+              <input
+                type="text"
+                id="translation"
+                class="full"
+                maxlength="256"
+                autocomplete="off"
+              />
+            </div>
+            <div class="field">
+              <label for="weight">权重（影响词云字号 1-100）</label>
+              <input type="number" id="weight" min="1" max="100" value="1" />
+            </div>
+            <div class="field">
+              <label>
+                <input type="checkbox" id="known" />
+                已掌握
+              </label>
+            </div>
+            <div style="display: flex; gap: 8px">
+              <button type="submit" id="submit-btn">添加</button>
+              <button type="button" class="ghost" id="reset-btn" style="display: none">
+                取消编辑
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 12px;
+            "
+          >
+            <h2 style="margin: 0">我的单词</h2>
+            <span id="count" style="color: var(--text-dim); font-size: 13px"></span>
+            <div class="segmented" id="list-filter" style="margin-left: auto">
+              <button data-value="all" class="active">全部</button>
+              <button data-value="unknown">未会</button>
+              <button data-value="known">已会</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>原词</th>
+                  <th>翻译</th>
+                  <th style="width: 80px">权重</th>
+                  <th style="width: 80px">状态</th>
+                  <th style="width: 180px">操作</th>
+                </tr>
+              </thead>
+              <tbody id="word-list">
+                <tr>
+                  <td colspan="5" class="empty-row">加载中…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/js/manage.js"></script>
+  </body>
+</html>

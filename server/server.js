@@ -1,0 +1,92 @@
+const path = require('path');
+const fs = require('fs');
+const dotenv = require('dotenv');
+
+// 按 NODE_ENV 加载对应 .env 文件，找不到时回退到 .env
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const envCandidates = [
+  path.join(__dirname, `.env.${NODE_ENV}.local`),
+  path.join(__dirname, `.env.${NODE_ENV}`),
+  path.join(__dirname, '.env.local'),
+  path.join(__dirname, '.env'),
+];
+const envFile = envCandidates.find((p) => fs.existsSync(p));
+if (envFile) {
+  dotenv.config({ path: envFile });
+  console.log(`[env] loaded ${path.basename(envFile)} (NODE_ENV=${NODE_ENV})`);
+} else {
+  dotenv.config();
+  console.warn(`[env] no .env file found, using process.env only (NODE_ENV=${NODE_ENV})`);
+}
+
+const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const { connectDB } = require('./config/db');
+
+const authRoutes = require('./routes/auth');
+const wordRoutes = require('./routes/words');
+
+const app = express();
+
+// helmet 默认 CSP 会阻止 CDN 加载 wordcloud2.js，这里放开 jsdelivr/unpkg
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        'script-src': [
+          "'self'",
+          'https://cdn.jsdelivr.net',
+          'https://unpkg.com',
+          "'unsafe-inline'",
+        ],
+        'style-src': ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
+        'img-src': ["'self'", 'data:'],
+      },
+    },
+  })
+);
+
+if (process.env.CORS_ORIGIN) {
+  app.use(cors({ origin: process.env.CORS_ORIGIN.split(',') }));
+}
+
+app.use(express.json({ limit: '256kb' }));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/words', wordRoutes);
+
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+const publicDir = path.join(__dirname, '..', 'public');
+app.use(express.static(publicDir));
+app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
+
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'not_found', path: req.path });
+  }
+  return next();
+});
+
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  console.error('[server]', err);
+  res.status(500).json({ error: 'server_error', message: err.message });
+});
+
+const PORT = Number(process.env.PORT) || 1234;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/word_cloud';
+
+(async () => {
+  try {
+    await connectDB(MONGO_URI);
+    app.listen(PORT, () => {
+      console.log(`[server] listening on http://127.0.0.1:${PORT}`);
+    });
+  } catch (err) {
+    console.error('[server] failed to start:', err);
+    process.exit(1);
+  }
+})();

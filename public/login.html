@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>登录 · 生词云</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="auth-wrapper">
+      <div class="card auth-card">
+        <h1>生词云</h1>
+        <p class="subtitle">把背过的单词都堆成一片云</p>
+
+        <div class="auth-tabs">
+          <button data-tab="login" class="active">登录</button>
+          <button data-tab="register">注册</button>
+        </div>
+
+        <form id="auth-form">
+          <div class="field">
+            <label for="username">用户名</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="full"
+              autocomplete="username"
+              minlength="3"
+              maxlength="32"
+              required
+            />
+          </div>
+          <div class="field">
+            <label for="password">密码</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="full"
+              autocomplete="current-password"
+              minlength="6"
+              maxlength="64"
+              required
+            />
+          </div>
+          <button type="submit" class="full" id="submit-btn">登录</button>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="/js/auth-page.js"></script>
+  </body>
+</html>

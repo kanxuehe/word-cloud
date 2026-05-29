@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+*.log
+.DS_Store
+npm-debug.log*
+yarn-error.log
+.pm2/
+dist/

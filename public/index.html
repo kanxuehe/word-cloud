@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>生词云</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body class="cloud-page">
+    <header class="topbar">
+      <div class="brand">生词云</div>
+      <nav>
+        <a href="/" class="active">词云</a>
+        <a href="/manage.html">管理</a>
+      </nav>
+      <div class="user-area">
+        <span id="user-label"></span>
+        <button class="ghost" id="logout-btn">退出</button>
+      </div>
+    </header>
+
+    <div class="cloud-toolbar">
+      <div class="group">
+        <label>显示</label>
+        <div class="segmented" id="display-toggle">
+          <button data-value="word" class="active">原词</button>
+          <button data-value="translation">翻译</button>
+        </div>
+      </div>
+      <div class="group">
+        <label>筛选</label>
+        <div class="segmented" id="filter-toggle">
+          <button data-value="all" class="active">全部</button>
+          <button data-value="unknown">未会</button>
+          <button data-value="known">已会</button>
+        </div>
+      </div>
+      <div class="group">
+        <label>
+          <input type="checkbox" id="dim-known" checked />
+          已会单词淡化显示
+        </label>
+      </div>
+      <div class="group" style="margin-left: auto">
+        <button class="ghost" id="refresh-btn">刷新</button>
+        <button id="goto-manage">添加单词</button>
+      </div>
+    </div>
+
+    <div id="cloud">
+      <div class="empty-tip" id="empty-tip" style="display: none">
+        <div>还没有单词，去管理页添加几个吧～</div>
+        <a href="/manage.html"><button>立即添加</button></a>
+      </div>
+      <canvas id="cloud-canvas"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.3/src/wordcloud2.js"></script>
+    <script type="module" src="/js/cloud.js"></script>
+  </body>
+</html>
