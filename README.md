@@ -134,10 +134,11 @@ sudo systemctl enable --now nginx
   sudo firewall-cmd --reload
   ```
 
-**SELinux**（必做）：默认会拦截 Nginx 连本机端口，不做这步会 502 Bad Gateway。
+**SELinux**（先看再说）：很多云镜像（如本次的 AlmaLinux 9.8）默认 `SELinux is disabled`，那就什么都不用做。**仅当 `getenforce` 返回 `Enforcing` 时**，才需要放行 Nginx 访问本机端口，否则会 502 Bad Gateway：
 
 ```bash
-sudo setsebool -P httpd_can_network_connect 1
+getenforce                                                  # Disabled / Permissive / Enforcing
+sudo setsebool -P httpd_can_network_connect 1               # 仅 Enforcing 时执行
 ```
 
 > 不论选哪种防火墙方案，都不要把 `1234` 端口直接暴露到公网，让 Node 只监听 `127.0.0.1`，外部统一走 Nginx。
@@ -147,18 +148,16 @@ sudo setsebool -P httpd_can_network_connect 1
 ```bash
 sudo mkdir -p /opt/word-cloud
 sudo chown $USER:$USER /opt/word-cloud
-git clone <你的仓库> /opt/word-cloud      # 或 scp 上传
+git clone https://github.com/kanxuehe/word-cloud.git /opt/word-cloud
 cd /opt/word-cloud/server
 
 cp .env.example .env.production
-vi .env.production                        # 填写 MONGO_URI、JWT_SECRET 等
-npm ci --omit=dev
-```
-
-生成强随机 JWT 密钥（粘贴到 `.env.production` 的 `JWT_SECRET=` 后面）：
-
-```bash
+# 生成强随机 JWT 密钥，并贴到 .env.production 的 JWT_SECRET= 后面
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+vi .env.production                        # 填写 MONGO_URI、JWT_SECRET 等
+chmod 600 .env.production                 # 含密钥，缩权限避免被其他用户读到
+
+npm ci --omit=dev
 ```
 
 > 使用 Atlas 时记得在 Atlas 控制台 **Network Access** 把这台 VPS 的公网 IP 加入白名单，
@@ -166,15 +165,25 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 
 ### 4. 用 PM2 守护进程
 
+> 用 `root` 运行更省事；若用非 root 用户，记得 `pm2 startup systemd -u $USER --hp $HOME` 并按提示执行 sudo 命令。
+
 ```bash
 cd /opt/word-cloud/server
 pm2 start ecosystem.config.cjs            # 已内置 NODE_ENV=production
-pm2 save
-pm2 startup systemd                       # 按提示复制执行 sudo env PATH=... 那条命令
+pm2 save                                  # 把当前进程列表写入 dump.pm2
+pm2 startup systemd                       # 设置开机自启；按提示复制执行 sudo env PATH=... 那条命令
 pm2 status                                # word-cloud 应为 online
 ```
 
-自检后端是否启动成功：
+**自检（必看）**：`pm2 logs word-cloud --lines 20 --nostream` 应该能看到这三行，缺一不可：
+
+```text
+[env] loaded .env.production (NODE_ENV=production)
+[db] MongoDB connected: word_cloud
+[server] listening on http://127.0.0.1:1234
+```
+
+只有 `[server] listening` 出现才说明端口真的起来了；如果只看到前两行卡住，多半是 Mongo 连不上（看 Atlas Network Access 白名单 / 用户名密码 / URL encode）。再走一次接口自检：
 
 ```bash
 curl -s http://127.0.0.1:1234/api/health   # 期望：{"ok":true}
@@ -183,40 +192,28 @@ curl -s http://127.0.0.1:1234/api/health   # 期望：{"ok":true}
 常用命令：
 
 ```bash
-pm2 logs word-cloud
-pm2 restart word-cloud
-pm2 reload word-cloud                      # 零停机重载
+pm2 logs word-cloud                        # 实时日志（带 stderr）
+pm2 restart word-cloud                     # 重启
+pm2 reload word-cloud                      # 零停机重载（reload 后端口约 3~4s 才重新监听）
 ```
-
-#### 日常更新（一键脚本）
-
-仓库根目录提供了 `deploy.sh`：拉代码 → 必要时 `npm ci` → `pm2 reload` → 健康检查。
-本地 `git push` 之后，VPS 上一行搞定：
-
-```bash
-cd /opt/word-cloud && ./deploy.sh
-```
-
-也可以从本地一行触发（需 ssh 免密或 sshpass）：
-
-```bash
-ssh root@<vps-ip> 'cd /opt/word-cloud && ./deploy.sh'
-```
-
-环境变量可覆盖默认值：`APP_DIR` / `PM2_NAME` / `HEALTH_URL`。
 
 ### 5. Nginx 反向代理
 
-AlmaLinux 9 的 `nginx.conf` 默认 include `/etc/nginx/conf.d/*.conf`，但 `nginx.conf` 本体里**已经有一个内置的 `server { listen 80 default_server; }` 块**指向欢迎页。如果我们再写一个 `default_server`，`nginx -t` 会报 `duplicate default_server` 错。
+AlmaLinux 9 的 `nginx.conf` 默认 include `/etc/nginx/conf.d/*.conf`，但 `nginx.conf` 本体里**自带一个默认 `server` 块**指向 `/usr/share/nginx/html`：
 
-**先看一下现状**：
-
-```bash
-ls -la /etc/nginx/conf.d/
-sudo grep -nE 'server *\{|listen |server_name ' /etc/nginx/nginx.conf
+```nginx
+server {
+    listen       80;
+    listen       [::]:80;
+    server_name  _;
+    root         /usr/share/nginx/html;
+    ...
+}
 ```
 
-**写入 word-cloud 配置**（作为 80 端口默认 server，匹配任意域名/IP 访问）：
+注意它**没有** `default_server` 关键字，所以即使我们再写一个 `listen 80 default_server`，`nginx -t` 不会报 `duplicate default_server`，但会有 `conflicting server name "_" on 0.0.0.0:80, ignored` 警告，**而且这个内置 server 仍会以非默认方式存在**：当 Nginx 内部 router 选错时，请求会落到它身上、命中 `/usr/share/nginx/html` 静态目录、返回 `nginx error!` 404 页面，让人摸不着头脑。**最干净的做法是把它注释掉**。
+
+**先写入 word-cloud 反代配置**：
 
 ```bash
 sudo tee /etc/nginx/conf.d/word-cloud.conf > /dev/null <<'EOF'
@@ -236,12 +233,21 @@ server {
     }
 }
 EOF
+```
 
-# 如果 nginx -t 报 duplicate default_server，注释掉 /etc/nginx/nginx.conf 里
-# 自带的那个 server { listen 80 default_server; ... } 块即可。
+**注释掉 `nginx.conf` 自带的 80 server 块**（注释前先备份，便于回滚）：
+
+```bash
+# 看下要注释的行号，默认 AlmaLinux 9 的镜像是 38..56 行
+sudo grep -nE 'server *\{|listen |server_name |^\s*\}' /etc/nginx/nginx.conf
+
+sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak.$(date +%s)
+sudo sed -i '38,56s/^/# /' /etc/nginx/nginx.conf
 
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+> 如果 `nginx -t` 仍然报 conflicting server name 警告，说明默认 server 块没在 38..56 行（被改过），自行调整行号即可，或者干脆手工编辑把它注释掉。
 
 验证外网链路通：
 
@@ -282,6 +288,32 @@ sudo certbot --nginx -d your-domain.com
 ```
 
 ⚠️ **风险提示**：HTTP 模式下 JWT 在网络上是明文的，公共 Wi-Fi 等不可信网络环境会有被嗅探的风险。仅建议家庭/移动数据等可信环境下短期使用，长期使用务必切到 6A 或 6B。
+
+### 7. 日常更新（一键脚本 `deploy.sh`）
+
+仓库根目录提供了 `deploy.sh`，做了四件事：`git pull --ff-only` → 检测到 `package-lock.json` 变了才 `npm ci --omit=dev`（否则跳过） → `pm2 reload --update-env` → 10 秒内重试 `/api/health` 直到通过。
+
+**VPS 上一行搞定**：
+
+```bash
+cd /opt/word-cloud && ./deploy.sh
+```
+
+**本地一行触发**（需要 ssh 免密，或临时用 `sshpass -p <pwd>` 前缀）：
+
+```bash
+ssh root@<vps-ip> 'cd /opt/word-cloud && ./deploy.sh'
+```
+
+可在本地 `~/.zshrc` 加个 alias 把 push + 远程 deploy 串成一条命令：
+
+```bash
+alias wc-deploy='git push && ssh root@<vps-ip> "cd /opt/word-cloud && ./deploy.sh"'
+```
+
+可用环境变量覆盖默认值：`APP_DIR`（默认 `/opt/word-cloud`） / `PM2_NAME`（默认 `word-cloud`） / `HEALTH_URL`（默认 `http://127.0.0.1:1234/api/health`）。
+
+> 健康检查为什么要 10 秒重试？因为 `pm2 reload` 是先 fork 新进程再 kill 旧进程，新进程从冷启动到 `MongoDB connected` + `listening on :1234` 大约 3~4 秒，期间端口短暂不可用。重试 10 次 × 1s 既能兜住正常 reload，又能在真正起不来时尽早报错并自动 tail PM2 日志。
 
 ### 附录：自建 MongoDB（不使用 Atlas 时）
 
