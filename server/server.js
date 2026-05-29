@@ -29,22 +29,37 @@ const wordRoutes = require('./routes/words');
 
 const app = express();
 
-// helmet 默认 CSP 会阻止 CDN 加载 wordcloud2.js，这里放开 jsdelivr/unpkg
+// 部署在 Nginx 反代之后，让 Express 正确识别 X-Forwarded-For / Proto
+app.set('trust proxy', 1);
+
+// HTTPS_ENABLED 控制是否下发会强制浏览器走 HTTPS 的安全策略
+// （HSTS 和 CSP 的 upgrade-insecure-requests）。
+// HTTP 部署时若开启，浏览器会强制升级所有请求到 https，没有 443 就 ERR_SSL_PROTOCOL_ERROR。
+const HTTPS_ENABLED = String(process.env.HTTPS_ENABLED || '').toLowerCase() === 'true';
+
+const cspDirectives = {
+  'script-src': [
+    "'self'",
+    'https://cdn.jsdelivr.net',
+    'https://unpkg.com',
+    "'unsafe-inline'",
+  ],
+  'style-src': ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
+  'img-src': ["'self'", 'data:'],
+};
+if (!HTTPS_ENABLED) {
+  cspDirectives['upgrade-insecure-requests'] = null;
+}
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       useDefaults: true,
-      directives: {
-        'script-src': [
-          "'self'",
-          'https://cdn.jsdelivr.net',
-          'https://unpkg.com',
-          "'unsafe-inline'",
-        ],
-        'style-src': ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
-        'img-src': ["'self'", 'data:'],
-      },
+      directives: cspDirectives,
     },
+    strictTransportSecurity: HTTPS_ENABLED
+      ? { maxAge: 7776000, includeSubDomains: true } // 90 天
+      : false,
   })
 );
 
