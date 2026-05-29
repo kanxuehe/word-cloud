@@ -62,6 +62,7 @@ npm run dev                         # NODE_ENV=development + node --watch
 | `JWT_SECRET` | JWT 签名密钥（**必须改成长随机字符串**） | — |
 | `JWT_EXPIRES_IN` | JWT 有效期 | `7d` |
 | `CORS_ORIGIN` | 允许跨域的来源（同源部署可留空） | — |
+| `HTTPS_ENABLED` | `true` 时下发 HSTS + CSP `upgrade-insecure-requests`；HTTP 部署务必保持 `false`，否则浏览器会强制升级到 https 导致 `ERR_SSL_PROTOCOL_ERROR` | `false` |
 
 > `.env.development` / `.env.production` 已在 `.gitignore` 中，包含连接串等敏感信息，请勿提交。
 
@@ -288,6 +289,10 @@ sudo certbot --nginx -d your-domain.com
 ```
 
 ⚠️ **风险提示**：HTTP 模式下 JWT 在网络上是明文的，公共 Wi-Fi 等不可信网络环境会有被嗅探的风险。仅建议家庭/移动数据等可信环境下短期使用，长期使用务必切到 6A 或 6B。
+
+> 切到 6A / 6B 完成 HTTPS 后，记得在 `.env.production` 里把 `HTTPS_ENABLED=true` 打开并 `pm2 reload`，浏览器才会收到 HSTS。
+>
+> 反之，**HTTP 部署务必保持 `HTTPS_ENABLED=false`（默认值）**——否则 helmet 默认开启的 HSTS 和 CSP `upgrade-insecure-requests` 会把浏览器锁在 https 升级路径上，css/js 全部 `ERR_SSL_PROTOCOL_ERROR`。如果不小心被锁过一次，需要在浏览器 `chrome://net-internals/#hsts` 里 **Delete domain security policies** 输入域名/IP 删除缓存，并完全关掉浏览器再重新打开。
 
 ### 7. 日常更新（一键脚本 `deploy.sh`）
 
