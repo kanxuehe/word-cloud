@@ -3,14 +3,18 @@ const fs = require('fs');
 const dotenv = require('dotenv');
 
 // 按 NODE_ENV 加载对应 .env 文件，找不到时回退到 .env
-// .env 文件位于项目根目录
+// 优先查项目根目录，其次查 server/ 目录（兼容旧部署）
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const rootDir = path.resolve(__dirname, '..');
 const envCandidates = [
   path.join(rootDir, `.env.${NODE_ENV}.local`),
+  path.join(__dirname, `.env.${NODE_ENV}.local`),
   path.join(rootDir, `.env.${NODE_ENV}`),
+  path.join(__dirname, `.env.${NODE_ENV}`),
   path.join(rootDir, '.env.local'),
+  path.join(__dirname, '.env.local'),
   path.join(rootDir, '.env'),
+  path.join(__dirname, '.env'),
 ];
 const envFile = envCandidates.find((p) => fs.existsSync(p));
 if (envFile) {

@@ -30,8 +30,8 @@ else
   echo "[deploy] tailwindcss binary not found, skipping CSS build (using committed version)"
 fi
 
-echo "[deploy] pm2 reload $PM2_NAME"
-pm2 reload "$PM2_NAME" --update-env >/dev/null
+echo "[deploy] pm2 reload ecosystem.config.cjs"
+pm2 reload ecosystem.config.cjs --update-env >/dev/null
 
 echo "[deploy] health check $HEALTH_URL"
 for i in 1 2 3 4 5 6 7 8 9 10; do
