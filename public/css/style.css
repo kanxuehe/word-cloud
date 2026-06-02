@@ -288,6 +288,28 @@ label {
   color: var(--text-dim);
 }
 
+.cloud-tooltip {
+  position: fixed;
+  background: var(--bg-elev);
+  border: 1px solid var(--primary);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.cloud-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* 管理页 */
 .manage-grid {
   display: grid;

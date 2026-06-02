@@ -23,6 +23,7 @@ const state = {
 
 const canvas = document.getElementById('cloud-canvas');
 const wrap = document.getElementById('cloud');
+const tooltip = document.getElementById('cloud-tooltip');
 const emptyTip = document.getElementById('empty-tip');
 const userLabel = document.getElementById('user-label');
 const user = getUser();
@@ -87,7 +88,8 @@ function buildList() {
       if (!text) return null;
       let weight = Math.max(1, Math.min(100, w.weight || 1));
       if (state.dimKnown && w.known) weight = Math.max(1, weight * 0.6);
-      return [text, weight, w.known];
+      // extra: [known, originalWord, translation]
+      return [text, weight, w.known, w.word, w.translation];
     })
     .filter(Boolean);
 }
@@ -109,6 +111,18 @@ function render() {
   const maxWeight = list.reduce((m, x) => Math.max(m, x[1]), 1);
   const baseSize = Math.min(canvas.width, canvas.height) / 12;
 
+  function showTooltip(text, x, y) {
+    if (!text) return;
+    tooltip.textContent = text;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+    tooltip.classList.add('show');
+  }
+
+  function hideTooltip() {
+    tooltip.classList.remove('show');
+  }
+
   WordCloud(canvas, {
     list,
     gridSize: Math.round(8 * (canvas.width / 1024)),
@@ -129,8 +143,45 @@ function render() {
     drawOutOfBound: false,
     shrinkToFit: true,
     minSize: 8,
+    hover: (item, _dim, event) => {
+      if (!item) {
+        hideTooltip();
+        return;
+      }
+      // item: [displayText, weight, known, originalWord, translation]
+      const originalWord = item[3];
+      const translation = item[4];
+      const displayText = item[0];
+      let tipText = '';
+      if (state.displayField === 'word') {
+        // showing original words — hover shows translation
+        tipText = translation || '';
+      } else {
+        // showing translations — hover shows original word
+        tipText = originalWord !== displayText ? originalWord : '';
+      }
+      if (tipText) {
+        showTooltip(tipText, event.clientX + 14, event.clientY - 36);
+      } else {
+        hideTooltip();
+      }
+    },
   });
+
+  // Follow cursor when tooltip is visible; hide on leave
+  tooltipMoveHandler = (e) => {
+    if (tooltip.classList.contains('show')) {
+      tooltip.style.left = (e.clientX + 14) + 'px';
+      tooltip.style.top = (e.clientY - 36) + 'px';
+    }
+  };
+  canvas.addEventListener('mousemove', tooltipMoveHandler);
+
+  canvas.removeEventListener('mouseleave', hideTooltip);
+  canvas.addEventListener('mouseleave', hideTooltip);
 }
+
+let tooltipMoveHandler = null;
 
 async function loadAndRender() {
   try {
