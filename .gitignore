@@ -11,3 +11,6 @@ npm-debug.log*
 yarn-error.log
 .pm2/
 dist/
+tailwindcss
+tailwindcss-linux-x64
+tailwindcss-macos-arm64

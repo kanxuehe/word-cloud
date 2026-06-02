@@ -79,7 +79,7 @@ function resetForm() {
   knownInput.checked = false;
   formTitle.textContent = '添加新单词';
   submitBtn.textContent = '添加';
-  resetBtn.style.display = 'none';
+  resetBtn.classList.add('hidden');
   wordInput.focus();
 }
 
@@ -94,7 +94,7 @@ function startEdit(id) {
   knownInput.checked = !!w.known;
   formTitle.textContent = '编辑单词';
   submitBtn.textContent = '保存修改';
-  resetBtn.style.display = '';
+  resetBtn.classList.remove('hidden');
   wordInput.focus();
   wordInput.select();
 }
@@ -146,29 +146,29 @@ function renderList() {
   }`;
 
   if (!items.length) {
-    listBody.innerHTML = `<tr><td colspan="5" class="empty-row">暂无数据</td></tr>`;
+    listBody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-8">暂无数据</td></tr>`;
     return;
   }
 
   listBody.innerHTML = items
     .map(
       (w) => `
-        <tr data-id="${w.id}">
-          <td><strong>${escapeHtml(w.word)}</strong></td>
-          <td>${escapeHtml(w.translation || '—')}</td>
-          <td>${w.weight}</td>
-          <td>
-            <span class="tag ${w.known ? 'known' : 'unknown'}">
+        <tr data-id="${w.id}" class="hover:bg-indigo-500/5">
+          <td class="text-left py-[10px] px-3 border-b border-slate-700 align-middle"><strong>${escapeHtml(w.word)}</strong></td>
+          <td class="text-left py-[10px] px-3 border-b border-slate-700 align-middle">${escapeHtml(w.translation || '—')}</td>
+          <td class="text-left py-[10px] px-3 border-b border-slate-700 align-middle">${w.weight}</td>
+          <td class="text-left py-[10px] px-3 border-b border-slate-700 align-middle">
+            <span class="inline-block py-0.5 px-2 rounded-xl text-xs border ${w.known ? 'bg-green-500/10 border-green-500 text-green-500' : 'bg-pink-400/10 border-pink-400 text-pink-400'}">
               ${w.known ? '已会' : '未会'}
             </span>
           </td>
-          <td>
-            <div class="row-actions">
-              <button class="ghost" data-act="toggle">${
+          <td class="text-left py-[10px] px-3 border-b border-slate-700 align-middle">
+            <div class="flex gap-1.5">
+              <button class="ghost text-xs py-1 px-2.5 whitespace-nowrap" data-act="toggle">${
                 w.known ? '标为未会' : '标为已会'
               }</button>
-              <button class="ghost" data-act="edit">编辑</button>
-              <button class="danger" data-act="delete">删除</button>
+              <button class="ghost text-xs py-1 px-2.5 whitespace-nowrap" data-act="edit">编辑</button>
+              <button class="danger text-xs py-1 px-2.5 whitespace-nowrap" data-act="delete">删除</button>
             </div>
           </td>
         </tr>`

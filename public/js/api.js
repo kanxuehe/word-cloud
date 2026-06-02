@@ -86,13 +86,14 @@ export function showToast(message, type = '') {
   let el = document.querySelector('.toast');
   if (!el) {
     el = document.createElement('div');
-    el.className = 'toast';
+    el.className = 'toast fixed top-4 right-4 bg-slate-800 border border-slate-700 px-4 py-3 rounded-lg shadow-lg text-sm z-[100] max-w-[360px] opacity-0 -translate-y-2 transition-all duration-200 pointer-events-none';
     document.body.appendChild(el);
   }
   el.textContent = message;
-  el.className = `toast show ${type}`;
+  const typeBorder = type === 'success' ? 'border-green-500' : type === 'error' ? 'border-red-500' : 'border-slate-700';
+  el.className = `toast fixed top-4 right-4 bg-slate-800 border px-4 py-3 rounded-lg shadow-lg text-sm z-[100] max-w-[360px] opacity-100 translate-y-0 transition-all duration-200 pointer-events-none ${typeBorder}`;
   clearTimeout(el._t);
   el._t = setTimeout(() => {
-    el.className = `toast ${type}`;
+    el.className = `toast fixed top-4 right-4 bg-slate-800 border border-slate-700 px-4 py-3 rounded-lg shadow-lg text-sm z-[100] max-w-[360px] opacity-0 -translate-y-2 transition-all duration-200 pointer-events-none`;
   }, 2500);
 }

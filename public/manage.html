@@ -4,25 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>单词管理 · 生词云</title>
+    <link rel="stylesheet" href="/css/tailwind.css" />
     <link rel="stylesheet" href="/css/style.css" />
   </head>
-  <body>
-    <header class="topbar">
-      <div class="brand">生词云</div>
+  <body class="bg-slate-900 text-slate-200 font-sans leading-relaxed">
+    <header class="flex items-center justify-between px-6 py-3 bg-slate-800 border-b border-slate-700 sticky top-0 z-10">
+      <div class="font-semibold text-base">生词云</div>
       <nav>
-        <a href="/">词云</a>
-        <a href="/manage.html" class="active">管理</a>
+        <a href="/" class="mr-4 text-slate-400 text-sm hover:text-slate-200">词云</a>
+        <a href="/manage.html" class="text-slate-200 font-medium text-sm">管理</a>
       </nav>
-      <div class="user-area">
+      <div class="flex items-center gap-3 text-xs text-slate-400">
         <span id="user-label"></span>
         <button class="ghost" id="logout-btn">退出</button>
       </div>
     </header>
 
-    <div class="container">
-      <div class="manage-grid">
-        <div class="card">
-          <h2 id="form-title">添加新单词</h2>
+    <div class="max-w-[1200px] mx-auto p-6">
+      <div class="grid grid-cols-[360px_1fr] gap-5 max-[880px]:grid-cols-1">
+        <div class="bg-slate-800 border border-slate-700 rounded-lg p-5 shadow-lg">
+          <h2 id="form-title" class="m-0 mb-4 text-base">添加新单词</h2>
           <form id="word-form">
             <input type="hidden" id="word-id" />
             <div class="field">
@@ -30,7 +31,7 @@
               <input
                 type="text"
                 id="word"
-                class="full"
+                class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-lg py-2 px-3 text-sm outline-none focus:border-indigo-500 transition-colors"
                 maxlength="128"
                 required
                 autocomplete="off"
@@ -41,24 +42,24 @@
               <input
                 type="text"
                 id="translation"
-                class="full"
+                class="w-full bg-slate-800 text-slate-200 border border-slate-700 rounded-lg py-2 px-3 text-sm outline-none focus:border-indigo-500 transition-colors"
                 maxlength="256"
                 autocomplete="off"
               />
             </div>
             <div class="field">
               <label for="weight">权重（影响词云字号 1-100）</label>
-              <input type="number" id="weight" min="1" max="100" value="1" />
+              <input type="number" id="weight" min="1" max="100" value="1" class="w-[60px] bg-slate-800 text-slate-200 border border-slate-700 rounded-lg py-2 px-3 text-sm outline-none focus:border-indigo-500 transition-colors" />
             </div>
             <div class="field">
-              <label>
-                <input type="checkbox" id="known" />
+              <label class="flex items-center gap-2 text-slate-400 text-[13px] mb-0 cursor-pointer">
+                <input type="checkbox" id="known" class="w-4 h-4 cursor-pointer" />
                 已掌握
               </label>
             </div>
-            <div style="display: flex; gap: 8px">
+            <div class="flex gap-2">
               <button type="submit" id="submit-btn">添加</button>
-              <button type="button" class="ghost" id="reset-btn" style="display: none">
+              <button type="button" class="ghost hidden" id="reset-btn">
                 取消编辑
               </button>
             </div>
@@ -66,31 +67,24 @@
         </div>
 
         <div>
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              margin-bottom: 12px;
-            "
-          >
-            <h2 style="margin: 0">我的单词</h2>
-            <span id="count" style="color: var(--text-dim); font-size: 13px"></span>
-            <div class="segmented" id="list-filter" style="margin-left: auto">
+          <div class="flex items-center gap-3 mb-3">
+            <h2 class="m-0 text-base">我的单词</h2>
+            <span id="count" class="text-slate-400 text-[13px]"></span>
+            <div class="segmented ml-auto" id="list-filter">
               <button data-value="all" class="active">全部</button>
               <button data-value="unknown">未会</button>
               <button data-value="known">已会</button>
             </div>
           </div>
-          <div class="table-wrap">
-            <table>
+          <div class="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden max-h-[calc(100vh-200px)] overflow-y-auto">
+            <table class="w-full border-collapse text-sm">
               <thead>
                 <tr>
-                  <th>原词</th>
-                  <th>翻译</th>
-                  <th style="width: 80px">权重</th>
-                  <th style="width: 80px">状态</th>
-                  <th style="width: 180px">操作</th>
+                  <th class="text-left py-[10px] px-3 border-b border-slate-700 font-medium text-slate-400 text-[13px] bg-slate-800 sticky top-0">原词</th>
+                  <th class="text-left py-[10px] px-3 border-b border-slate-700 font-medium text-slate-400 text-[13px] bg-slate-800 sticky top-0">翻译</th>
+                  <th class="text-left py-[10px] px-3 border-b border-slate-700 font-medium text-slate-400 text-[13px] bg-slate-800 sticky top-0 w-20">权重</th>
+                  <th class="text-left py-[10px] px-3 border-b border-slate-700 font-medium text-slate-400 text-[13px] bg-slate-800 sticky top-0 w-20">状态</th>
+                  <th class="text-left py-[10px] px-3 border-b border-slate-700 font-medium text-slate-400 text-[13px] bg-slate-800 sticky top-0 w-[180px]">操作</th>
                 </tr>
               </thead>
               <tbody id="word-list">

@@ -10,17 +10,24 @@ HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:1234/api/health}"
 
 cd "$APP_DIR"
 
-old_lock=$(sha256sum server/package-lock.json 2>/dev/null | awk '{print $1}' || true)
+old_lock=$(sha256sum package-lock.json 2>/dev/null | awk '{print $1}' || true)
 echo "[deploy] git pull --ff-only"
 git pull --ff-only
-new_lock=$(sha256sum server/package-lock.json 2>/dev/null | awk '{print $1}' || true)
+new_lock=$(sha256sum package-lock.json 2>/dev/null | awk '{print $1}' || true)
 
-cd server
 if [ "$old_lock" != "$new_lock" ]; then
   echo "[deploy] package-lock.json changed -> npm ci --omit=dev"
   npm ci --omit=dev --no-audit --no-fund
 else
   echo "[deploy] dependencies unchanged -> skip npm ci"
+fi
+
+# Build Tailwind CSS if the CLI binary exists
+if [ -x ./tailwindcss ]; then
+  echo "[deploy] building tailwind CSS"
+  ./tailwindcss -i public/css/tailwind-input.css -o public/css/tailwind.css --minify
+else
+  echo "[deploy] tailwindcss binary not found, skipping CSS build (using committed version)"
 fi
 
 echo "[deploy] pm2 reload $PM2_NAME"
