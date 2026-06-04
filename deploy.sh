@@ -16,18 +16,18 @@ git pull --ff-only
 new_lock=$(sha256sum package-lock.json 2>/dev/null | awk '{print $1}' || true)
 
 if [ "$old_lock" != "$new_lock" ]; then
-  echo "[deploy] package-lock.json changed -> npm ci --omit=dev"
-  npm ci --omit=dev --no-audit --no-fund
+  echo "[deploy] package-lock.json changed -> npm ci"
+  npm ci --no-audit --no-fund
 else
   echo "[deploy] dependencies unchanged -> skip npm ci"
 fi
 
-# Build Tailwind CSS if the CLI binary exists
-if [ -x ./tailwindcss ]; then
+# Build Tailwind CSS if node_modules exists (tailwindcss installed as devDependency)
+if [ -d node_modules ]; then
   echo "[deploy] building tailwind CSS"
-  ./tailwindcss -i public/css/tailwind-input.css -o public/css/tailwind.css --minify
+  npx tailwindcss -i public/css/tailwind-input.css -o public/css/tailwind.css --minify
 else
-  echo "[deploy] tailwindcss binary not found, skipping CSS build (using committed version)"
+  echo "[deploy] node_modules not found, skipping CSS build (using committed version)"
 fi
 
 echo "[deploy] pm2 reload ecosystem.config.cjs"
