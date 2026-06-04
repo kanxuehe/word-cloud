@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -7,12 +7,20 @@
     <link rel="stylesheet" href="/css/tailwind.css" />
     <link rel="stylesheet" href="/css/style.css" />
   </head>
-  <body class="flex flex-col h-screen bg-slate-900 text-slate-200 font-sans leading-relaxed">
-    <header class="flex items-center justify-between px-6 py-3 bg-slate-800 border-b border-slate-700 sticky top-0 z-10">
+  <body
+    class="flex flex-col h-screen bg-slate-900 text-slate-200 font-sans leading-relaxed"
+  >
+    <header
+      class="flex items-center justify-between px-6 py-3 bg-slate-800 border-b border-slate-700 sticky top-0 z-10"
+    >
       <div class="font-semibold text-base">生词云</div>
       <nav>
         <a href="/" class="mr-4 text-slate-200 font-medium text-sm">词云</a>
-        <a href="/manage.html" class="text-slate-400 text-sm hover:text-slate-200">管理</a>
+        <a
+          href="/manage.html"
+          class="text-slate-400 text-sm hover:text-slate-200"
+          >管理</a
+        >
       </nav>
       <div class="flex items-center gap-3 text-xs text-slate-400">
         <span id="user-label"></span>
@@ -20,7 +28,9 @@
       </div>
     </header>
 
-    <div class="flex flex-wrap gap-3 items-center px-6 py-3 bg-slate-800 border-b border-slate-700">
+    <div
+      class="flex flex-wrap gap-3 items-center px-6 py-3 bg-slate-800 border-b border-slate-700"
+    >
       <div class="flex items-center gap-2">
         <label class="text-xs text-slate-400 mb-0">显示</label>
         <div class="segmented" id="display-toggle">
@@ -36,9 +46,14 @@
           <button data-value="known">已会</button>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <label class="text-xs text-slate-400 mb-0">
-          <input type="checkbox" id="dim-known" checked class="w-4 h-4 cursor-pointer" />
+      <div>
+        <label class="flex items-center gap-2 text-xs text-slate-400 mb-0">
+          <input
+            type="checkbox"
+            id="dim-known"
+            checked
+            class="w-4 h-4 cursor-pointer"
+          />
           已会单词淡化显示
         </label>
       </div>
@@ -49,7 +64,11 @@
     </div>
 
     <div id="cloud" class="flex-1 relative bg-slate-900">
-      <div class="absolute inset-0 flex items-center justify-center flex-col gap-3 text-slate-400" id="empty-tip" style="display: none">
+      <div
+        class="absolute inset-0 flex items-center justify-center flex-col gap-3 text-slate-400"
+        id="empty-tip"
+        style="display: none"
+      >
         <div>还没有单词，去管理页添加几个吧～</div>
         <a href="/manage.html"><button>立即添加</button></a>
       </div>
