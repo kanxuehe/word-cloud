@@ -18,15 +18,34 @@ function handleValidation(req, res) {
 
 router.get(
   '/',
-  [query('known').optional().isIn(['true', 'false'])],
+  [
+    query('known').optional().isIn(['true', 'false']),
+    query('pageSize').optional().isInt({ min: 1, max: 100 }),
+    query('pageNum').optional().isInt({ min: 1 }),
+  ],
   async (req, res, next) => {
     if (!handleValidation(req, res)) return;
     try {
       const filter = { userId: req.userId };
       if (req.query.known === 'true') filter.known = true;
       if (req.query.known === 'false') filter.known = false;
-      const words = await Word.find(filter).sort({ updatedAt: -1 });
-      return res.json({ items: words });
+
+      const pageSize = parseInt(req.query.pageSize, 10) || 10;
+      const pageNum = parseInt(req.query.pageNum, 10) || 1;
+      const skip = (pageNum - 1) * pageSize;
+
+      const [words, total] = await Promise.all([
+        Word.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(pageSize),
+        Word.countDocuments(filter),
+      ]);
+
+      return res.json({
+        items: words,
+        total,
+        pageSize,
+        pageNum,
+        totalPages: Math.ceil(total / pageSize),
+      });
     } catch (err) {
       return next(err);
     }

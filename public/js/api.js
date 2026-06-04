@@ -55,9 +55,13 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     }),
-  listWords: (knownFilter) => {
-    const q = knownFilter === undefined ? '' : `?known=${knownFilter}`;
-    return request(`/api/words${q}`);
+  listWords: ({ known, pageSize, pageNum } = {}) => {
+    const params = new URLSearchParams();
+    if (known !== undefined) params.set('known', known);
+    if (pageSize) params.set('pageSize', pageSize);
+    if (pageNum) params.set('pageNum', pageNum);
+    const qs = params.toString();
+    return request(`/api/words${qs ? '?' + qs : ''}`);
   },
   createWord: (data) =>
     request('/api/words', { method: 'POST', body: JSON.stringify(data) }),

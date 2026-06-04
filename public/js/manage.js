@@ -4,8 +4,12 @@ requireAuth();
 
 const state = {
   words: [],
+  total: 0,
   filter: 'all',
   editingId: null,
+  pageNum: 1,
+  pageSize: 10,
+  loading: false,
 };
 
 const form = document.getElementById('word-form');
@@ -19,6 +23,7 @@ const submitBtn = document.getElementById('submit-btn');
 const resetBtn = document.getElementById('reset-btn');
 const listBody = document.getElementById('word-list');
 const countEl = document.getElementById('count');
+const paginationEl = document.getElementById('pagination');
 const userLabel = document.getElementById('user-label');
 const user = getUser();
 if (user) userLabel.textContent = user.username;
@@ -28,10 +33,11 @@ document.getElementById('logout-btn').addEventListener('click', logout);
 document.querySelectorAll('#list-filter button').forEach((btn) => {
   btn.addEventListener('click', () => {
     state.filter = btn.dataset.value;
+    state.pageNum = 1;
     document
       .querySelectorAll('#list-filter button')
       .forEach((b) => b.classList.toggle('active', b === btn));
-    renderList();
+    load();
   });
 });
 
@@ -52,17 +58,15 @@ form.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   try {
     if (state.editingId) {
-      const updated = await api.updateWord(state.editingId, payload);
-      const idx = state.words.findIndex((w) => w.id === updated.id);
-      if (idx >= 0) state.words[idx] = updated;
+      await api.updateWord(state.editingId, payload);
       showToast('已更新', 'success');
     } else {
-      const created = await api.createWord(payload);
-      state.words.unshift(created);
+      await api.createWord(payload);
+      state.pageNum = 1;
       showToast('已添加', 'success');
     }
     resetForm();
-    renderList();
+    load();
   } catch (err) {
     showToast(err.message || '保存失败', 'error');
   } finally {
@@ -103,10 +107,9 @@ async function toggleKnown(id) {
   const w = state.words.find((x) => x.id === id);
   if (!w) return;
   try {
-    const updated = await api.setKnown(id, !w.known);
-    const idx = state.words.findIndex((x) => x.id === id);
-    if (idx >= 0) state.words[idx] = updated;
-    renderList();
+    await api.setKnown(id, !w.known);
+    showToast(w.known ? '已标为未会' : '已标为已会', 'success');
+    load();
   } catch (err) {
     showToast(err.message || '操作失败', 'error');
   }
@@ -118,10 +121,13 @@ async function removeWord(id) {
   if (!confirm(`确认删除"${w.word}"？`)) return;
   try {
     await api.deleteWord(id);
-    state.words = state.words.filter((x) => x.id !== id);
     if (state.editingId === id) resetForm();
+    // 如果删除了当前页的最后一条且不是第一页，回退一页
+    if (state.words.length === 1 && state.pageNum > 1) {
+      state.pageNum -= 1;
+    }
     showToast('已删除', 'success');
-    renderList();
+    load();
   } catch (err) {
     showToast(err.message || '删除失败', 'error');
   }
@@ -137,18 +143,19 @@ function escapeHtml(s) {
 }
 
 function renderList() {
-  let items = state.words;
-  if (state.filter === 'known') items = items.filter((w) => w.known);
-  if (state.filter === 'unknown') items = items.filter((w) => !w.known);
+  const items = state.words;
+  const total = state.total;
 
-  countEl.textContent = `共 ${state.words.length} 条，未会 ${
-    state.words.filter((w) => !w.known).length
-  }`;
+  countEl.textContent = `共 ${total} 条`;
 
   if (!items.length) {
     listBody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-8">暂无数据</td></tr>`;
+    renderPagination(total, 0, 0);
     return;
   }
+
+  const from = (state.pageNum - 1) * state.pageSize + 1;
+  const to = from + items.length - 1;
 
   listBody.innerHTML = items
     .map(
@@ -174,7 +181,36 @@ function renderList() {
         </tr>`
     )
     .join('');
+  renderPagination(total, from, to);
 }
+
+function renderPagination(total, from, to) {
+  if (!paginationEl) return;
+  if (total <= state.pageSize) {
+    paginationEl.innerHTML = total
+      ? `<span>显示 ${from}-${to} / ${total}</span>`
+      : '';
+    return;
+  }
+
+  const totalPages = Math.ceil(total / state.pageSize);
+  paginationEl.innerHTML = `
+    <span>显示 ${from}-${to} / ${total}</span>
+    <div class="flex items-center gap-2">
+      <button class="ghost text-xs py-1.5 px-3" data-page-act="prev" ${state.pageNum === 1 ? 'disabled' : ''}>上一页</button>
+      <span class="text-slate-300">第 ${state.pageNum} / ${totalPages} 页</span>
+      <button class="ghost text-xs py-1.5 px-3" data-page-act="next" ${state.pageNum === totalPages ? 'disabled' : ''}>下一页</button>
+    </div>
+  `;
+}
+
+paginationEl?.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-page-act]');
+  if (!btn) return;
+  if (btn.dataset.pageAct === 'prev') state.pageNum -= 1;
+  if (btn.dataset.pageAct === 'next') state.pageNum += 1;
+  load();
+});
 
 listBody.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-act]');
@@ -188,13 +224,26 @@ listBody.addEventListener('click', (e) => {
   else if (act === 'delete') removeWord(id);
 });
 
+function showLoading() {
+  listBody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-8"><span class="loading-spinner"></span>加载中…</td></tr>`;
+}
+
 async function load() {
+  if (state.loading) return;
+  state.loading = true;
+  showLoading();
   try {
-    const res = await api.listWords();
+    const params = { pageSize: state.pageSize, pageNum: state.pageNum };
+    if (state.filter === 'known') params.known = 'true';
+    else if (state.filter === 'unknown') params.known = 'false';
+    const res = await api.listWords(params);
     state.words = res.items || [];
+    state.total = res.total || 0;
     renderList();
   } catch (err) {
     showToast(err.message || '加载失败', 'error');
+  } finally {
+    state.loading = false;
   }
 }
 
