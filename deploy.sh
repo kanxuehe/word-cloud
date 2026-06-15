@@ -22,10 +22,10 @@ else
   echo "[deploy] dependencies unchanged -> skip npm ci"
 fi
 
-# Build Tailwind CSS if node_modules exists (tailwindcss installed as devDependency)
+# Build Tailwind CSS if node_modules exists (pin v3 兼容 --omit=dev 时 npx 自动下载)
 if [ -d node_modules ]; then
   echo "[deploy] building tailwind CSS"
-  npx tailwindcss -i public/css/tailwind-input.css -o public/css/tailwind.css --minify
+  npx tailwindcss@^3 -i public/css/tailwind-input.css -o public/css/tailwind.css --minify
 else
   echo "[deploy] node_modules not found, skipping CSS build (using committed version)"
 fi

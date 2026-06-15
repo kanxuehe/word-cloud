@@ -8,7 +8,7 @@
     "start": "NODE_ENV=production node server/server.js",
     "start:prod": "NODE_ENV=production node server/server.js",
     "dev": "NODE_ENV=development node --watch server/server.js",
-    "build:css": "npx tailwindcss -i public/css/tailwind-input.css -o public/css/tailwind.css --minify"
+    "build:css": "npx tailwindcss@^3 -i public/css/tailwind-input.css -o public/css/tailwind.css --minify"
   },
   "engines": {
     "node": ">=20"
