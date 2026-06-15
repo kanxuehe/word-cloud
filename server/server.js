@@ -2,27 +2,21 @@ const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
 
-// 按 NODE_ENV 加载对应 .env 文件，找不到时回退到 .env
-// 优先查项目根目录，其次查 server/ 目录（兼容旧部署）
+// 按 NODE_ENV 加载项目根目录下的 .env 文件
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const rootDir = path.resolve(__dirname, '..');
 const envCandidates = [
-  path.join(rootDir, `.env.${NODE_ENV}.local`),
-  path.join(__dirname, `.env.${NODE_ENV}.local`),
-  path.join(rootDir, `.env.${NODE_ENV}`),
-  path.join(__dirname, `.env.${NODE_ENV}`),
-  path.join(rootDir, '.env.local'),
-  path.join(__dirname, '.env.local'),
-  path.join(rootDir, '.env'),
-  path.join(__dirname, '.env'),
-];
+  `.env.${NODE_ENV}.local`,
+  `.env.${NODE_ENV}`,
+  '.env.local',
+  '.env',
+].map((f) => path.join(rootDir, f));
 const envFile = envCandidates.find((p) => fs.existsSync(p));
 if (envFile) {
   dotenv.config({ path: envFile });
-  console.log(`[env] loaded ${path.basename(envFile)} (NODE_ENV=${NODE_ENV})`);
+  console.log(`[env] loaded ${path.relative(rootDir, envFile)} (NODE_ENV=${NODE_ENV})`);
 } else {
-  dotenv.config();
-  console.warn(`[env] no .env file found, using process.env only (NODE_ENV=${NODE_ENV})`);
+  console.warn(`[env] no .env file found in ${rootDir} (NODE_ENV=${NODE_ENV})`);
 }
 
 const express = require('express');
