@@ -67,6 +67,8 @@ npm run dev                         # NODE_ENV=development + node --watch
 | `JWT_EXPIRES_IN` | JWT 有效期 | `7d` |
 | `CORS_ORIGIN` | 允许跨域的来源（同源部署可留空） | — |
 | `HTTPS_ENABLED` | `true` 时下发 HSTS + CSP `upgrade-insecure-requests`；HTTP 部署务必保持 `false`，否则浏览器会强制升级到 https 导致 `ERR_SSL_PROTOCOL_ERROR` | `false` |
+| `DEEPSEEK_API_KEY` | DeepSeek API Key，用于短文 AI 翻译功能 | — |
+| `TRANSLATE_WHITELIST` | 翻译白名单（逗号分隔的用户名），为空则所有用户可翻译 | — |
 
 > `.env.development` / `.env.production` 已在 `.gitignore` 中，包含连接串等敏感信息，请勿提交。
 
@@ -199,6 +201,7 @@ curl -s http://127.0.0.1:1234/api/health   # 期望：{"ok":true}
 ```bash
 pm2 logs word-cloud                        # 实时日志（带 stderr）
 pm2 restart word-cloud                     # 重启
+pm2 restart word-cloud --update-env        # 重启并从 ecosystem.config.cjs 同步环境变量（修改 .env 后需执行）
 pm2 reload word-cloud                      # 零停机重载（reload 后端口约 3~4s 才重新监听）
 ```
 

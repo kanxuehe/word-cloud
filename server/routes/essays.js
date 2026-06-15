@@ -7,6 +7,16 @@ const router = express.Router();
 
 router.use(authRequired);
 
+// 翻译白名单：只有列在 TRANSLATE_WHITELIST 中的用户名才能使用翻译功能
+// 为空则允许所有人使用
+function translateAllowed(req, res, next) {
+  const whitelist = (process.env.TRANSLATE_WHITELIST || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (whitelist.length === 0 || whitelist.includes(req.username)) {
+    return next();
+  }
+  return res.status(403).json({ error: 'forbidden', message: '你没有翻译权限' });
+}
+
 function handleValidation(req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -183,6 +193,7 @@ router.delete(
 // 纯文本翻译（不保存，供表单使用）
 router.post(
   '/translate-text',
+  translateAllowed,
   [body('text').isString().trim().isLength({ min: 1 })],
   async (req, res, next) => {
     if (!handleValidation(req, res)) return;
@@ -201,6 +212,7 @@ router.post(
 // AI 翻译（保存到数据库）
 router.post(
   '/:id/translate',
+  translateAllowed,
   [param('id').isMongoId()],
   async (req, res, next) => {
     if (!handleValidation(req, res)) return;
