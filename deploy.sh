@@ -22,10 +22,17 @@ else
   echo "[deploy] dependencies unchanged -> skip npm ci"
 fi
 
-# Build Tailwind CSS if node_modules exists (pin v3 兼容 --omit=dev 时 npx 自动下载)
+# Build Tailwind CSS if node_modules exists
+# Tailwind v4 removed the CLI binary from the 'tailwindcss' package; we pin to v3.
 if [ -d node_modules ]; then
   echo "[deploy] building tailwind CSS"
-  npx tailwindcss@^3 -i public/css/tailwind-input.css -o public/css/tailwind.css --minify
+  if [ -x node_modules/.bin/tailwindcss ]; then
+    # Use locally installed version (from devDependencies) — guarantees v3
+    node_modules/.bin/tailwindcss -i public/css/tailwind-input.css -o public/css/tailwind.css --minify
+  else
+    # Fallback: npx with exact v3 pin (handles --omit=dev / production installs)
+    npx --yes tailwindcss@3.4.19 -i public/css/tailwind-input.css -o public/css/tailwind.css --minify
+  fi
 else
   echo "[deploy] node_modules not found, skipping CSS build (using committed version)"
 fi
