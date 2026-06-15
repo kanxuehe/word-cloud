@@ -32,6 +32,7 @@ const { connectDB } = require('./config/db');
 
 const authRoutes = require('./routes/auth');
 const wordRoutes = require('./routes/words');
+const essayRoutes = require('./routes/essays');
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use(express.json({ limit: '256kb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/words', wordRoutes);
+app.use('/api/essays', essayRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 

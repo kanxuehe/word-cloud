@@ -73,6 +73,28 @@ export const api = {
       body: JSON.stringify({ known }),
     }),
   deleteWord: (id) => request(`/api/words/${id}`, { method: 'DELETE' }),
+
+  // 短文
+  listEssays: ({ pageSize, pageNum } = {}) => {
+    const params = new URLSearchParams();
+    if (pageSize) params.set('pageSize', pageSize);
+    if (pageNum) params.set('pageNum', pageNum);
+    const qs = params.toString();
+    return request(`/api/essays${qs ? '?' + qs : ''}`);
+  },
+  getEssay: (id) => request(`/api/essays/${id}`),
+  createEssay: (data) =>
+    request('/api/essays', { method: 'POST', body: JSON.stringify(data) }),
+  updateEssay: (id, data) =>
+    request(`/api/essays/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteEssay: (id) => request(`/api/essays/${id}`, { method: 'DELETE' }),
+  translateEssay: (id) =>
+    request(`/api/essays/${id}/translate`, { method: 'POST' }),
+  translateText: (text) =>
+    request('/api/essays/translate-text', {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    }),
 };
 
 export function requireAuth() {
