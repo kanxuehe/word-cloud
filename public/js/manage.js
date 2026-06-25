@@ -26,6 +26,7 @@ const listBody = document.getElementById('word-list');
 const countEl = document.getElementById('count');
 const paginationEl = document.getElementById('pagination');
 const searchInput = document.getElementById('search-input');
+const translateBtn = document.getElementById('translate-btn');
 const userLabel = document.getElementById('user-label');
 const user = getUser();
 if (user) userLabel.textContent = user.username;
@@ -51,6 +52,26 @@ searchInput.addEventListener('input', () => {
     state.pageNum = 1;
     load();
   }, 300);
+});
+
+translateBtn.addEventListener('click', async () => {
+  const text = wordInput.value.trim();
+  if (!text) {
+    showToast('请先填写原词', 'error');
+    return;
+  }
+  translateBtn.disabled = true;
+  translateBtn.textContent = '⏳ 翻译中…';
+  try {
+    const res = await api.translateText(text);
+    translationInput.value = res.translationText || '';
+    showToast('翻译完成', 'success');
+  } catch (err) {
+    showToast(err.message || '翻译失败', 'error');
+  } finally {
+    translateBtn.disabled = false;
+    translateBtn.textContent = '🤖 AI 翻译';
+  }
 });
 
 resetBtn.addEventListener('click', resetForm);
