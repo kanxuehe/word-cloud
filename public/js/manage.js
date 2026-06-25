@@ -6,6 +6,7 @@ const state = {
   words: [],
   total: 0,
   filter: 'all',
+  search: '',
   editingId: null,
   pageNum: 1,
   pageSize: 10,
@@ -24,6 +25,7 @@ const resetBtn = document.getElementById('reset-btn');
 const listBody = document.getElementById('word-list');
 const countEl = document.getElementById('count');
 const paginationEl = document.getElementById('pagination');
+const searchInput = document.getElementById('search-input');
 const userLabel = document.getElementById('user-label');
 const user = getUser();
 if (user) userLabel.textContent = user.username;
@@ -39,6 +41,16 @@ document.querySelectorAll('#list-filter button').forEach((btn) => {
       .forEach((b) => b.classList.toggle('active', b === btn));
     load();
   });
+});
+
+let searchTimer;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    state.search = searchInput.value.trim();
+    state.pageNum = 1;
+    load();
+  }, 300);
 });
 
 resetBtn.addEventListener('click', resetForm);
@@ -236,6 +248,7 @@ async function load() {
     const params = { pageSize: state.pageSize, pageNum: state.pageNum };
     if (state.filter === 'known') params.known = 'true';
     else if (state.filter === 'unknown') params.known = 'false';
+    if (state.search) params.search = state.search;
     const res = await api.listWords(params);
     state.words = res.items || [];
     state.total = res.total || 0;

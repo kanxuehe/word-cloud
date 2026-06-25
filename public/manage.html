@@ -96,7 +96,14 @@
           <div class="flex items-center gap-3 mb-3">
             <h2 class="m-0 text-base">我的单词</h2>
             <span id="count" class="text-slate-400 text-[13px]"></span>
-            <div class="segmented ml-auto" id="list-filter">
+            <input
+              type="search"
+              id="search-input"
+              placeholder="搜索原词…"
+              class="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg py-1.5 px-3 text-sm outline-none focus:border-indigo-500 transition-colors w-40 ml-auto"
+              autocomplete="off"
+            />
+            <div class="segmented" id="list-filter">
               <button data-value="all" class="active">全部</button>
               <button data-value="unknown">未会</button>
               <button data-value="known">已会</button>

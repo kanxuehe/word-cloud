@@ -55,11 +55,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     }),
-  listWords: ({ known, pageSize, pageNum } = {}) => {
+  listWords: ({ known, pageSize, pageNum, search } = {}) => {
     const params = new URLSearchParams();
     if (known !== undefined) params.set('known', known);
     if (pageSize) params.set('pageSize', pageSize);
     if (pageNum) params.set('pageNum', pageNum);
+    if (search) params.set('word', search);
     const qs = params.toString();
     return request(`/api/words${qs ? '?' + qs : ''}`);
   },

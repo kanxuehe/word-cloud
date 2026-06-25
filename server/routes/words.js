@@ -22,11 +22,12 @@ router.get(
     query('known').optional().isIn(['true', 'false']),
     query('pageSize').optional().isInt({ min: 1, max: 100 }),
     query('pageNum').optional().isInt({ min: 1 }),
+    query('word').optional().isString().trim().isLength({ min: 1, max: 128 }),
   ],
   async (req, res, next) => {
     if (!handleValidation(req, res)) return;
     try {
-      const filter = { userId: req.userId };
+      const filter = { userId: req.userId, word: { $regex: req.query.word || '', $options: 'i' } };
       if (req.query.known === 'true') filter.known = true;
       if (req.query.known === 'false') filter.known = false;
 
